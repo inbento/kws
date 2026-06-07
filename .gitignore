@@ -1,0 +1,65 @@
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── PyTorch / model artefacts ─────────────────────────────────────────────────
+*.pt
+*.pth
+*.ckpt
+Project/checkpoints/
+
+# ── Dataset (large binary data) ───────────────────────────────────────────────
+Project/data_set/
+video/
+my_dataset/
+clean_dataset_v1/
+clean_dataset_v1(save-person)/
+clean_dataset_v2(save-person)/
+
+# ── Generated output files ────────────────────────────────────────────────────
+*.png
+*.json
+test_files.txt
+Project/test_files.txt
+Project/app_test
+
+# ── Word / Office documents ───────────────────────────────────────────────────
+*.docx
+*.doc
+*.xlsx
+*.pptx
+
+# ── Project-specific folders to exclude ──────────────────────────────────────
+Docx/
+Статьи/
+
+# ── OS artefacts ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE / editor ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
