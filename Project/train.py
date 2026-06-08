@@ -10,17 +10,21 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import dataset as ds
+from models.audio_features import get_feature_transform
 from models.cnn import CNNModel
 from models.lstm import BiLSTMClassifier
 from models.resnet import ResNetModel
 from models.transformer import TransformerClassifier
 
 """
-Название модели и её гиперпараметры
-Гиперпараметры модели можно переопределить или оставить None, для использования значений по умолчанию из класса модели.
+Поддерживаемые модели: "cnn", "lstm", "resnet", "transformer".
+Поддерживаемые признаки: "mel", "fbank", "stft", "wavelet".
 """
+
 MODEL_NAME = "transformer"
-MODEL_HPARAMS = None
+MODEL_HPARAMS = {
+    "feature_type": "stft",
+}
 
 DATASET_CONFIG = {
     "data_dir": "data_set",
@@ -59,9 +63,9 @@ def _fmt_time(seconds: float) -> str:
     """
     Форматирует время в строку ЧЧ:ММ:СС.
 
-    @seconds: float - количество секунд.
+    @param seconds : float - количество секунд.
 
-    Возвращает str - строка формата "чч:мм:сс".
+    Возвращает: str - строка формата "чч:мм:сс".
     """
     m, s = divmod(int(seconds), 60)
     h, m = divmod(m, 60)
@@ -73,11 +77,11 @@ def evaluate(model, loader, criterion, device, gpu_transform=None):
     """
     Оценивает модель на заданном наборе данных.
 
-    @model: nn.Module - модель.
-    @loader: DataLoader - загрузчик данных.
-    @criterion: функция потерь.
-    @device: torch.device - устройство для вычислений.
-    @gpu_transform: Callable или None - преобразование данных на GPU.
+    @param model : nn.Module - модель.
+    @param loader : DataLoader - загрузчик данных.
+    @param criterion : функция потерь.
+    @param device : torch.device - устройство для вычислений.
+    @param gpu_transform : Callable или None - преобразование данных на GPU.
 
     Возвращает: tuple - (средняя потеря, точность в процентах).
     """
@@ -100,12 +104,12 @@ def evaluate_with_cm(model, loader, criterion, device, num_classes: int, gpu_tra
     """
     Оценивает модель и строит матрицу ошибок.
 
-    @model: nn.Module - модель.
-    @loader: DataLoader - загрузчик данных.
-    @criterion: функция потерь.
-    @device: torch.device - устройство для вычислений.
-    @num_classes: int - количество классов.
-    @gpu_transform: Callable или None - преобразование данных на GPU.
+    @param model : nn.Module - модель.
+    @param loader : DataLoader - загрузчик данных.
+    @param criterion : функция потерь.
+    @param device : torch.device - устройство для вычислений.
+    @param num_classes : int - количество классов.
+    @param gpu_transform : Callable или None - преобразование данных на GPU.
 
     Возвращает: tuple - (средняя потеря, точность в процентах, матрица ошибок numpy).
     """
@@ -131,15 +135,15 @@ def save_checkpoint(path, model, optimizer, epoch, val_acc, model_name,
     """
     Сохраняет чекпойнт модели и метаданные для инференса.
 
-    @path: str - путь для сохранения.
-    @model: nn.Module - модель.
-    @optimizer: Optimizer - оптимизатор.
-    @epoch: int - номер эпохи.
-    @val_acc: float - точность на валидации.
-    @model_name: str - название архитектуры.
-    @label_map: dict - словарь меток.
-    @hparams: dict - гиперпараметры модели.
-    @audio_config: dict - конфигурация аудио.
+    @param path : str - путь для сохранения.
+    @param model : nn.Module - модель.
+    @param optimizer : Optimizer - оптимизатор.
+    @param epoch : int - номер эпохи.
+    @param val_acc : float - точность на валидации.
+    @param model_name : str - название архитектуры.
+    @param label_map : dict - словарь меток.
+    @param hparams : dict - гиперпараметры модели.
+    @param audio_config : dict - конфигурация аудио.
     """
     torch.save(
         {
@@ -161,9 +165,9 @@ def plot_training_curves(history: dict, ckpt_dir: str, model_name: str) -> str:
     """
     Рисует и сохраняет графики обучения: точность, потери, FP на валидации.
 
-    @history: dict - история метрик по эпохам.
-    @ckpt_dir: str - папка для сохранения графика.
-    @model_name: str - название модели для заголовка.
+    @param history : dict - история метрик по эпохам.
+    @param ckpt_dir : str - папка для сохранения графика.
+    @param model_name : str - название модели для заголовка.
 
     Возвращает: str - путь к сохранённому PNG.
     """
@@ -223,10 +227,10 @@ def plot_confusion_matrix(cm: np.ndarray, label_map: dict, ckpt_dir: str,
     """
     Рисует и сохраняет матрицу ошибок.
 
-    @cm: np.ndarray - матрица ошибок (counts).
-    @label_map: dict - словарь меток.
-    @ckpt_dir: str - папка для сохранения.
-    @title: str - заголовок графика.
+    @param cm : np.ndarray - матрица ошибок (counts).
+    @param label_map : dict - словарь меток.
+    @param ckpt_dir : str - папка для сохранения.
+    @param title : str - заголовок графика.
 
     Возвращает: str - путь к сохранённому PNG.
     """
@@ -278,11 +282,13 @@ def train():
     model_cls = MODEL_CLASSES[MODEL_NAME]
     model_manager = model_cls(hparams=MODEL_HPARAMS)
 
+    feature_type = model_manager.hparams.get("feature_type", "mel")
     batch_size = model_manager.get_batch_size()
     epochs = model_manager.get_epochs()
 
     audio_cfg = ds.AUDIO_CONFIG.copy()
-    gpu_transform = ds.get_mel_transform(audio_cfg).to(device)
+    gpu_transform = get_feature_transform(feature_type, audio_cfg).to(device)
+    print(f"[train] Feature type: {feature_type}")
 
     data_dir = os.path.join(_SCRIPT_DIR, DATASET_CONFIG["data_dir"])
     cfg_with_batch = {**DATASET_CONFIG, "batch_size": batch_size, "data_dir": data_dir}
@@ -317,7 +323,7 @@ def train():
     _trial_idx = 1
     while os.path.exists(os.path.join(_model_dir, f"trial_{_trial_idx}")):
         _trial_idx += 1
-    ckpt_dir = os.path.join(_model_dir, f"trial_{_trial_idx}")
+    ckpt_dir = os.path.join(_model_dir, f"trial_{_trial_idx}", f"{feature_type}")
     os.makedirs(ckpt_dir)
     print(f"[train] Checkpoint dir : {ckpt_dir}")
     best_ckpt = os.path.join(ckpt_dir, "best.pt")
@@ -437,6 +443,7 @@ def train():
 
     results = {
         "model": MODEL_NAME,
+        "feature_type": feature_type,
         "hparams": model_manager.hparams,
         "best_val_acc": round(best_val_acc, 4),
         "test_acc": round(test_acc, 4),

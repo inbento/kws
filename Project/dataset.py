@@ -6,6 +6,7 @@ import torch
 import torchaudio
 import torchaudio.transforms as T
 from torch.utils.data import DataLoader, Dataset
+from models.audio_features import get_feature_transform
 
 """
 Загрузка и разбиение датасета Google Speech Commands.
@@ -38,15 +39,7 @@ def get_mel_transform(audio_config: Optional[dict] = None) -> torch.nn.Sequentia
     Возвращает: nn.Sequential - последовательность преобразований.
     """
     cfg = audio_config or AUDIO_CONFIG
-    return torch.nn.Sequential(
-        T.MelSpectrogram(
-            sample_rate=cfg["sample_rate"],
-            n_fft=cfg["n_fft"],
-            hop_length=cfg["hop_length"],
-            n_mels=cfg["n_mels"],
-        ),
-        T.AmplitudeToDB(top_db=80),
-    )
+    return get_feature_transform("mel", cfg)
 
 
 class SpeechCommandsDataset(Dataset):
@@ -101,7 +94,7 @@ def get_classes(data_dir: str, include_classes: Optional[List[str]] = None) -> D
     """
     Строит словарь {название_класса: индекс} по подпапкам в data_dir.
     Папки, начинающиеся с '_' (например, _background_noise_), исключаются.
-    @include_classes ограничивает выборку указанным списком.
+    include_classes ограничивает выборку указанным списком.
     """
     all_classes = sorted(
         d for d in os.listdir(data_dir)
@@ -128,11 +121,11 @@ def build_splits(
     """
     Формирует списки (train_files, val_files, test_files) как (относительный_путь, метка).
 
-    @data_dir : str - путь к датасету.
-    @label_map : dict - словарь меток.
-    @use_official_split : bool - использовать официальное разбиение или случайное.
-    @train_ratio, val_ratio : float - доли при случайном разбиении.
-    @seed : int - зерно генератора.
+    @param data_dir : str - путь к датасету.
+    @param label_map : dict - словарь меток.
+    @param use_official_split : bool - использовать официальное разбиение или случайное.
+    @param train_ratio, val_ratio : float - доли при случайном разбиении.
+    @param seed : int - зерно генератора.
 
     Возвращает: tuple из трёх списков файлов.
     """
@@ -183,7 +176,7 @@ def _random_split(
     val_ratio: float,
     seed: int,
 ) -> Tuple[List, List, List]:
-    """Cлучайное разбиение по заданным долям."""
+    """Стратифицированное случайное разбиение по заданным долям."""
     rng = np.random.default_rng(seed)
 
     train_files, val_files, test_files = [], [], []

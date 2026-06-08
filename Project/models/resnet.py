@@ -60,10 +60,10 @@ class ResNetModel(BaseModel):
     HYPERPARAMS = {
         **BaseModel.HYPERPARAMS,
         "width_mult": 1.0,
-        "blocks_per_stage": [2, 2, 2, 2],
+        "blocks_per_stage": [4, 2, 4, 2],
         "dropout": 0.25,
         "batch_size": 128,
-        "epochs": 100,
+        "epochs": 50,
     }
 
     def create_model(self, num_classes: int, **kwargs) -> nn.Module:

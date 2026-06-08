@@ -10,20 +10,21 @@ class BaseModel:
     атрибут класса HYPERPARAMS и реализует метод create_model(),
     возвращающий готовый nn.Module.
 
-    hparams : dict или None – словарь с переопределениями гиперпараметров.
+    hparams : dict или None - словарь с переопределениями гиперпараметров.
     """
     
     """
     Общие гиперпараметры, наследуемые всеми моделями.
-    @learning_rate Скорость обучения для оптимизатора Adam
-    @weight_decay Коэффициент L2‑регуляризации для оптимизатора Adam
-    @batch_size Размер мини-батча при обучении
-    @epochs Общее количество эпох обучения
-    @scheduler Тип планировщика скорости обучения: "cosine", "step" или "none"
-    @step_size Период уменьшения lr для StepLR (используется только если scheduler == "step")
-    @gamma Коэффициент уменьшения lr для StepLR (используется только если scheduler == "step")
+    @param learning_rate Скорость обучения для оптимизатора Adam
+    @param weight_decay Коэффициент L2‑регуляризации для оптимизатора Adam
+    @param batch_size Размер мини-батча при обучении
+    @param epochs Общее количество эпох обучения
+    @param scheduler Тип планировщика скорости обучения: "cosine", "step" или "none"
+    @param step_size Период уменьшения lr для StepLR (используется только если scheduler == "step")
+    @param gamma Коэффициент уменьшения lr для StepLR (используется только если scheduler == "step")
     """
     HYPERPARAMS = {
+        "feature_type": "mel",
         "learning_rate": 1e-3,
         "weight_decay": 1e-4,
         "batch_size": 64,
@@ -34,7 +35,6 @@ class BaseModel:
     }
 
     def __init__(self, hparams: dict = None):
-        # Объединяем гиперпараметры по умолчанию с переданными
         self.hparams = {**self.HYPERPARAMS, **(hparams or {})}
 
     def create_model(self, num_classes: int, **kwargs) -> nn.Module:
@@ -76,10 +76,10 @@ class BaseModel:
 
     def get_transform(self):
         """
-        Возвращает строку 'mel', указывая, что модель ожидает
-        мел-спектрограммы (преобразование выполняется в train.py).
+        Возвращает тип признаков, указанный в гиперпараметрах.
+        Фактическое преобразование создаётся в train.py через audio_features.py.
         """
-        return "mel"
+        return self.hparams.get("feature_type", "mel")
 
     def get_batch_size(self) -> int:
         """Возвращает размер батча из гиперпараметров."""

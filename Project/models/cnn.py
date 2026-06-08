@@ -30,9 +30,9 @@ class CNNModel(BaseModel):
     HYPERPARAMS = {
         **BaseModel.HYPERPARAMS,
         "channels": [32, 64, 128, 256],
-        "dropout": 0.25,
+        "dropout": 0.30,
         "batch_size": 256,
-        "epochs": 100,
+        "epochs": 60,
     }
 
     def create_model(self, num_classes: int, **kwargs) -> nn.Module:

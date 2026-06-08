@@ -77,15 +77,10 @@ class InferenceEngine:
         self.audio_cfg = audio_cfg
         self.ckpt_path = ckpt_path
 
-        self.transform = torch.nn.Sequential(
-            T.MelSpectrogram(
-                sample_rate=audio_cfg["sample_rate"],
-                n_fft=audio_cfg["n_fft"],
-                hop_length=audio_cfg["hop_length"],
-                n_mels=n_mels,
-            ),
-            T.AmplitudeToDB(top_db=80),
-        ).to(self.device)
+        from models.audio_features import get_feature_transform
+
+        feature_type = hparams.get("feature_type", "mel")
+        self.transform = get_feature_transform(feature_type, audio_cfg).to(self.device)
 
         test_acc = ckpt.get("test_acc", None)
         test_acc_str = f"{test_acc:.2f}%" if test_acc is not None else "?"
@@ -131,9 +126,9 @@ class InferenceEngine:
 
 
 """
-@_ACCENT, _BG, _BG2, _FG, _FG_DIM, _GREEN, _RED, _YELLOW - цветовая палитра интерфейса.
-@_ROW_H - высота строки в списке классов.
-@_LPAD, _RPAD - отступы слева и справа для текста в строке класса.
+@param _ACCENT, _BG, _BG2, _FG, _FG_DIM, _GREEN, _RED, _YELLOW - цветовая палитра интерфейса.
+@param _ROW_H - высота строки в списке классов.
+@param _LPAD, _RPAD - отступы слева и справа для текста в строке класса.
 """
 _ACCENT = "#4A90D9"
 _BG = "#1E1E2E"

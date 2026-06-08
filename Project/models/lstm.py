@@ -16,11 +16,11 @@ class BiLSTMClassifier(BaseModel):
     """
     HYPERPARAMS = {
         **BaseModel.HYPERPARAMS,
-        "hidden_size": 256,
-        "num_layers": 2,
-        "dropout": 0.3,
+        "hidden_size": 512,
+        "num_layers": 4,
+        "dropout": 0.35,
         "batch_size": 128,
-        "epochs": 100,
+        "epochs": 75,
     }
 
     def create_model(self, num_classes: int, n_mels: int = 64, **kwargs) -> nn.Module:

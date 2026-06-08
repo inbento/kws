@@ -54,10 +54,10 @@ class TransformerClassifier(BaseModel):
         "d_model": 128,
         "nhead": 4,
         "dim_feedforward": 512,
-        "num_layers": 4,
-        "dropout": 0.1,
+        "num_layers": 8,
+        "dropout": 0.15,
         "batch_size": 128,
-        "epochs": 100,
+        "epochs": 70,
     }
 
     def create_model(self, num_classes: int, n_mels: int = 64, **kwargs) -> nn.Module:
